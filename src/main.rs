@@ -57,35 +57,6 @@ fn main() {
         process::exit(my_pid as i32);
     }
     let mut execute_file = execute_file.unwrap();
-    // // 入力した文字列の保存用一時ファイルを作成
-    // let temp_file : Result <File, Error> = tempfile::tempfile();
-    // if (temp_file.is_ok() != true) {
-    //     // アプリケーションの終了
-    //     println!("panic: {}", temp_file.unwrap_err());
-    //     process::exit(my_pid as i32);
-    // }
-    // // テンポラリファイルの絶対パスを取得
-    // let new_file : File = temp_file.unwrap();
-    // println!("{}", new_file.display());
-    // // 入力した文字列の保存用一時ファイルを作成
-    // let temp_dir : Result <TempDir, Error> = TempDir::new();
-    // if (temp_dir.is_ok() != true) {
-    //     // アプリケーションの終了
-    //     println!("panic: {}", temp_dir.unwrap_err());
-    //     process::exit(my_pid as i32);
-    // }
-    // // テンポラリファイルの絶対パスを取得
-    // let mut temp_file = temp_dir.unwrap().path().join("");
-    // println!("{}", temp_file.display());
-    // let new_file: Result<File, Error> = File::create(temp_file);
-    // if (new_file.is_ok() != true) {
-    //     // アプリケーションの終了
-    //     println!("panic: {}", new_file.unwrap_err());
-    //     process::exit(my_pid as i32);
-    // }
-    // let mut new_file : File = new_file.unwrap();
-    // new_file.write_all(b"Hello, world!");
-
 
 
 
@@ -112,16 +83,7 @@ fn main() {
         if input_data.is_ok() != true {
             panic!("error => {}", input_data.unwrap_err());
         }
-    //     println!("{}", input_data.unwrap());
-        // println!("<{}>", input);
-
-    //     // if (input == (exit_string + "\r\n").to_string()) {
-    //     //     println!("マッチ");
-    //     // }
-
-    //     println!("トリム前 {}:", input);
         remove_newline(&mut input);
-    //     println!("トリム後 {}:", input);
         // コマンドラインを終了するための処理
         if (exit_string.to_string() == input) {
             break;
@@ -202,28 +164,10 @@ fn remove_newline(newline_string : &mut String)
             if (_bytes[_bytes.len() - 1] == 13) {
                 _bytes.pop();
             }
-            // if (_bytes_length <= 1) {
-            //     return *newline_string = String :: from("");
-            // }
-            // println!("_bytes_length{}", _bytes_length);
-            // println!("-1{}", _bytes[_bytes_length -2]);
-            // println!("-2{}", _bytes[_bytes_length -3]);
-            // if (_bytes[_bytes_length - 1] == 10 && _bytes[_bytes_length - 2] == 13) {
-            //     // \nを削除
-            //     _bytes.pop();
-            //     // \rを削除
-            //     _bytes.pop();
-            // } else if (_bytes[_bytes_length - 1] == 10 && _bytes[_bytes_length - 2] != 13) {
-            //     // \nを削除
-            //     _bytes.pop();
-            // }
             check_type(&_bytes);
             new_vec = _bytes.to_vec();
             check_type(&_bytes);
             check_type(&new_vec);
-            // println!("{}", response.unwrap());
-            // check_type(&_bytes);
-            // check_type(&_bytes.to_vec());
         }
         let response : Result<String, FromUtf8Error> = String::from_utf8(new_vec);
         if (response.is_ok() == true) {
