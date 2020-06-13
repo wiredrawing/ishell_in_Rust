@@ -25,7 +25,13 @@ use std::env::temp_dir;
 use std::path::PathBuf;
 // 定数の宣言
 const exit_string : &str = "exit";
-
+use std::ffi::CString;
+use std::os::raw::c_char;
+// use cstr_core::{
+//     CString,
+//     CStr
+// };
+// use cstr_core::c_char;
 fn main() {
     let mut default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
@@ -172,12 +178,13 @@ fn main() {
                 }
             }
 
-            if String::from_utf8(for_output.clone()).is_ok() == true {
-                println!("output:> {} \n", String::from_utf8(for_output).unwrap());
-            } else {
-                println!("Err1: Failed to be executed the command which you input on background!");
-                println!("Err1: {}", String::from_utf8(for_output).unwrap_err());
-            }
+            print_c_string(for_output);
+            // if String::from_utf8(for_output.clone()).is_ok() == true {
+            //     // println!("output:> {} \n", String::from_utf8(for_output).unwrap());
+            // } else {
+            //     println!("Err1: Failed to be executed the command which you input on background!");
+            //     println!("Err1: {}", String::from_utf8(for_output).unwrap_err());
+            // }
 
             previous_newline_count = current_newline_count;
             current_newline_count = 0;
@@ -202,6 +209,31 @@ fn main() {
     process::exit(my_pid as i32);
 }
 
+
+
+fn print_c_string(output :Vec<u8>) {
+    unsafe {
+        println!("1");
+        extern { fn puts(s: *const c_char); }
+        println!("2");
+        // let mut output_copy = output.clone();
+        // output_copy.stdout.push(0);
+        println!("3");
+        let to_print = CString::new(output);
+        println!("4");
+        if (to_print.is_ok() == true) {
+            println!("5");
+            puts(to_print.unwrap().as_ptr());
+        } else {
+            panic!("{}", to_print.unwrap_err())
+        }
+        println!("6");
+        // let slice_to_c_string = String::from_utf8(output_copy.stdout).unwrap();
+        // let slice_to_c_string = &slice_to_c_string[0..];
+        // let c_string = CStr::from_bytes_with_nul(slice_to_c_string.as_bytes()).unwrap();
+        // println!("{}",  *(c_string as *const c_char));
+    }
+}
 
 
 // テキストに任意の文字列が含まれているかどうか
