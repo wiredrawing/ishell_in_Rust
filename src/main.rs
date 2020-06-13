@@ -1,6 +1,4 @@
 
-
-
 use std::string::FromUtf8Error;
 extern crate ctrlc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -8,13 +6,14 @@ use std::sync::Arc;
 
 use std::process;
 
-
 use std::fs::File;
 use std::env;
+
 use std::process::{
     Command,
     Output
 };
+
 use std::io::{
     Error,
     Write
@@ -24,8 +23,25 @@ use std::env::temp_dir;
 use std::path::PathBuf;
 // 定数の宣言
 const exit_string : &str = "exit";
-const php_command : &str = "php";
 fn main() {
+    let mut default_command : String = "php".to_string();
+    // 実行時のコマンドライン引数を取得
+    let arguments: Vec<String> = env::args().collect();
+    if (arguments.len() < 2) {
+        panic!("Select any execute file.");
+    }
+    let command= arguments.get(1);
+    // 入力されたコマンドが php | ruby | python?
+    let mut initialize_input : String = "".to_string();
+    match command {
+        default_command => {
+            initialize_input = "<?php \r\n".to_string();
+        },
+        _ => {
+            initialize_input.clear();
+        }
+    }
+
 
     // 起動中の自身のプロセスID
     let my_pid: u32 =  process::id();
@@ -51,15 +67,15 @@ fn main() {
         process::exit(my_pid as i32);
     }
     let mut validate_file = validate_file.unwrap();
+    validate_file.write_all(initialize_input.as_bytes());
+
+
 
     if (execute_file.is_ok() != true) {
         panic!("{}", execute_file.unwrap_err().to_string());
         process::exit(my_pid as i32);
     }
     let mut execute_file = execute_file.unwrap();
-
-
-
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
@@ -101,7 +117,7 @@ fn main() {
         let output : Output;
         let output_vector : Vec<u8>;
         if cfg!(windows) {
-            output_result = Command::new(php_command).args(&[&validate_file_path]).output();
+            output_result = Command::new(&default_command).args(&[&validate_file_path]).output();
             if (output_result.is_ok() != true) {
                 panic!("{}", output_result.unwrap_err());
             }
@@ -129,12 +145,12 @@ fn main() {
             if String::from_utf8(for_output.clone()).is_ok() == true {
                 println!("{}", String::from_utf8(for_output).unwrap());
             } else {
-                println!("Err: Failed to be executed the command which you input on background!");
-                println!("Err: {}", String::from_utf8(for_output).unwrap_err().to_string());
+                println!("Err1: Failed to be executed the command which you input on background!");
+                println!("Err1: {}", String::from_utf8(for_output).unwrap_err().to_string());
             }
         } else {
-            println!("Err: Failed to be executed the command which you input on background!");
-            println!("Err: {}", String::from_utf8(output.stderr).unwrap().to_string());
+            println!("Err2: Failed to be executed the command which you input on background!");
+            println!("Err2: {}", String::from_utf8(output.stderr).unwrap().to_string());
         }
         previous_newline_count = current_newline_count;
         current_newline_count = 0;
@@ -179,6 +195,6 @@ fn remove_newline(newline_string : &mut String)
 }
 
 fn check_type<T>(_: T) -> String {
-    // println!("{}", std::any::type_name::<T>());
+    println!("{}", std::any::type_name::<T>());
     return std::any::type_name::<T>().to_string();
 }
