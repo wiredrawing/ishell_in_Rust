@@ -7,8 +7,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use std::process;
-
-
 use std::fs::File;
 use std::fs;
 use std::env;
@@ -27,19 +25,35 @@ use std::path::PathBuf;
 const exit_string : &str = "exit";
 use std::ffi::CString;
 use std::os::raw::c_char;
+use std::os::raw::c_int;
 // use cstr_core::{
 //     CString,
 //     CStr
 // };
 // use cstr_core::c_char;
+use printf_rs::*;
 fn main() {
+
+    let mut _s: String = "php".to_string();
+    let mut _s_bytes = _s.as_bytes();
+    let mut _s_to_string : String = String::from_utf8(_s.as_bytes().to_vec()).unwrap();
+    println!("_s => {}", _s);
+
+    // 破壊的メソッド
+    _s.push_str("文字列を追加");
+    println!("{}", _s);
+
     let mut default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
     let arguments: Vec<String> = env::args().collect();
-    if (arguments.len() < 2) {
-        panic!("Select any execute file.");
+    let command: String;
+    if (arguments.len() >= 2) {
+        command = arguments.get(1).unwrap().to_string();
+    } else {
+        command = "php".to_string();
+        // panic!("Select any execute file.");
     }
-    let command= arguments.get(1);
+
     // 入力されたコマンドが php | ruby | python?
     let mut initialize_input : String = "".to_string();
     match command {
@@ -213,21 +227,23 @@ fn main() {
 
 fn print_c_string(output :Vec<u8>) {
     unsafe {
-        println!("1");
-        extern { fn puts(s: *const c_char); }
-        println!("2");
+        extern "C" {
+            fn puts(s: *const c_char);
+            // fn printf(fmt: *const c_char, s: *const c_char ) ;
+            fn printf(__restrict__fmt: *const c_char, ...) -> c_int;
+        }
         // let mut output_copy = output.clone();
         // output_copy.stdout.push(0);
-        println!("3");
         let to_print = CString::new(output);
-        println!("4");
+        check_type(&to_print);
+        let to_printf = to_print.clone();
         if (to_print.is_ok() == true) {
-            println!("5");
-            puts(to_print.unwrap().as_ptr());
+            puts(to_printf.unwrap().as_ptr());
+            // printf!("%s", to_printf.unwrap().as_ptr());
+            // printf!("%s", cstr!("Hello World !"));
         } else {
             panic!("{}", to_print.unwrap_err())
         }
-        println!("6");
         // let slice_to_c_string = String::from_utf8(output_copy.stdout).unwrap();
         // let slice_to_c_string = &slice_to_c_string[0..];
         // let c_string = CStr::from_bytes_with_nul(slice_to_c_string.as_bytes()).unwrap();
@@ -283,6 +299,7 @@ fn remove_newline(newline_string : &mut String)
         }
     }
 }
+
 
 fn check_type<T>(_: T) -> String {
     println!("{}", std::any::type_name::<T>());
