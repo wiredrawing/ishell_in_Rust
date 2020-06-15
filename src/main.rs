@@ -21,17 +21,25 @@ use std::io::{
 
 use std::env::temp_dir;
 use std::path::PathBuf;
+
+
 // 定数の宣言
-const exit_string : &str = "exit";
+const EXIT_STRING : &str = "exit";
+const CLEAR_STRING: &str = "clear";
+const DEL_STRING: &str = "del";
+
+
 use std::ffi::CString;
-use std::os::raw::c_char;
-use std::os::raw::c_int;
+use std::os::raw::{
+    c_char,
+    c_int,
+    c_void
+};
 // use cstr_core::{
 //     CString,
 //     CStr
 // };
 // use cstr_core::c_char;
-use printf_rs::*;
 fn main() {
 
     let mut _s: String = "php".to_string();
@@ -125,10 +133,34 @@ fn main() {
             panic!("error => {}", input_data.unwrap_err());
         }
         remove_newline(&mut input);
+
+
+
+        // 入力内容によってループ内の処理を変更する
         // コマンドラインを終了するための処理
-        if (exit_string.to_string() == input) {
+        if (EXIT_STRING.to_string() == input) {
+            // インタラクティブシェルの終了コードとして
+            // ループを終了させる
             break;
+        } else if (CLEAR_STRING.to_string() == input ) {
+            // 正常実行が完了していた直近のソースコードまで巻き上げる
+            let backup_string : String = fs::read_to_string(&execute_file_path).unwrap();
+            validate_file.set_len(0);
+            validate_file.write_all(backup_string.as_bytes());
+            input.clear();
+            continue;
+        } else if (DEL_STRING.to_string() == input) {
+            validate_file.set_len(0);
+            validate_file.write_all("<?php \r\n".as_bytes()).unwrap();
+            execute_file.set_len(0);
+            execute_file.write_all("<?php \r\n".as_bytes()).unwrap();
+            input.clear();
+            continue;
+        } else {
+            // 有効なコマンドとして評価する場合
         }
+
+
         let target_index : i32= input.len() as i32 - 1;
         if str_position(&input, '\\' as u8) == target_index {
             continue;
@@ -204,13 +236,13 @@ fn main() {
             current_newline_count = 0;
         } else {
             // 入力したプログラムの実行が失敗した場合
-            let mut backup_contents : Result<String, Error>;
-            backup_contents = fs::read_to_string(&execute_file_path);
-            if (backup_contents . is_ok() == true) {
-                let backup_contents = backup_contents.unwrap();
-                validate_file.set_len(0);
-                validate_file.write_all(backup_contents.as_bytes());
-            }
+            // let mut backup_contents : Result<String, Error>;
+            // backup_contents = fs::read_to_string(&execute_file_path);
+            // if (backup_contents . is_ok() == true) {
+            //     let backup_contents = backup_contents.unwrap();
+            //     validate_file.set_len(0);
+            //     validate_file.write_all(backup_contents.as_bytes());
+            // }
 
             println!("Err2: Failed to be executed the command which you input on background!");
             println!("Err2: {}", String::from_utf8(output.stderr).unwrap());
@@ -228,9 +260,9 @@ fn main() {
 fn print_c_string(output :Vec<u8>) {
     unsafe {
         extern "C" {
-            fn puts(s: *const c_char);
+            fn puts(s: *const c_char) -> c_int;
             // fn printf(fmt: *const c_char, s: *const c_char ) ;
-            fn printf(__restrict__fmt: *const c_char, ...) -> c_int;
+            fn printf(format: *const c_char) -> c_int;
         }
         // let mut output_copy = output.clone();
         // output_copy.stdout.push(0);
@@ -238,9 +270,8 @@ fn print_c_string(output :Vec<u8>) {
         check_type(&to_print);
         let to_printf = to_print.clone();
         if (to_print.is_ok() == true) {
-            puts(to_printf.unwrap().as_ptr());
-            // printf!("%s", to_printf.unwrap().as_ptr());
-            // printf!("%s", cstr!("Hello World !"));
+            puts(to_printf.clone().unwrap().as_ptr());
+            // printf(to_printf.unwrap().as_ptr());
         } else {
             panic!("{}", to_print.unwrap_err())
         }

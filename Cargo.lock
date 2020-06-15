@@ -51,6 +51,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
 
 [[package]]
+name = "gcc"
+version = "0.3.55"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
+
+[[package]]
 name = "getrandom"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -60,12 +66,6 @@ dependencies = [
  "libc",
  "wasi",
 ]
-
-[[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
@@ -99,12 +99,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "237a5ed80e274dbc66f86bd59c1e25edc039660be53194b5fe0a482e0f2612ea"
 
 [[package]]
-name = "printf-rs"
-version = "0.1.1"
+name = "printf"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ed6caac5c1aed1ab45e1d8197ee0543d5edf3fac7bcdbb74dd3d0e8e06e3094"
+checksum = "15343a566c054c72bdc3f3f138002a87e5320d7389c9713112c9b77e83539141"
 dependencies = [
- "lazy_static",
+ "gcc",
  "libc",
 ]
 
@@ -208,7 +208,7 @@ dependencies = [
  "cstr_core",
  "ctrlc",
  "libc",
- "printf-rs",
+ "printf",
  "tempdir",
  "tempfile",
 ]
