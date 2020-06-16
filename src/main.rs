@@ -7,7 +7,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use std::process;
-use std::fs::File;
 use std::fs;
 use std::env;
 use std::process::{
@@ -47,7 +46,7 @@ fn main() {
     let mut _s_to_string : String = String::from_utf8(_s.as_bytes().to_vec()).unwrap();
     println!("_s => {}", _s);
 
-    // 破壊的メソッド
+    // 破壊的メソッド NULLではなく empty()が返却される
     let empty : () = _s.push_str("文字列を追加");
     if empty == () {
         println!("empty変数はから");
@@ -86,16 +85,16 @@ fn main() {
     let mut current_newline_count : i32 = 0;
 
     // 検証用ソース・ファイルと実行用ソース・ファイルの2つのFileオブジェクトを取得する
-    let mut validate_dir : PathBuf= env::temp_dir();
+    let mut validate_dir : PathBuf = env::temp_dir();
     validate_dir.push("validate_log.dat");
     let validate_file_path = format!("{}", validate_dir.display());
-    let validate_file : Result<File, Error> = File::create(&validate_file_path);
+    let validate_file : Result<fs::File, Error> = fs::File::create(&validate_file_path);
 
     // 実行用
     let mut execute_dir: PathBuf = env::temp_dir();
     execute_dir.push("execute_log.dat");
     let execute_file_path = format!("{}", execute_dir.display());
-    let execute_file : Result<File, Error> = File::create(&execute_file_path);
+    let execute_file : Result<fs::File, Error> = fs::File::create(&execute_file_path);
 
     // 検証用ソース・ファイルの作成失敗時
     if (validate_file.is_ok() != true) {
@@ -183,7 +182,6 @@ fn main() {
         // 以下よりphpコマンドの実行
         let mut output_result : Result<Output, Error>;
         let mut output : Output;
-        let mut output_vector : Vec<u8>;
         if cfg!(windows) {
             output_result = Command::new(&default_command).args(&[&validate_file_path]).output();
             if (output_result.is_ok() != true) {
@@ -213,7 +211,7 @@ fn main() {
                 panic!("{}", output_result.unwrap_err().to_string());
             }
             output = output_result.unwrap();
-            let mut exit_code : Option<i32> = output.status.code();
+            let exit_code : Option<i32> = output.status.code();
             let mut for_output : Vec<u8> = Vec::new();
 
             for value in output.stdout {
@@ -266,7 +264,7 @@ fn main() {
 
 
 
-fn print_c_string(output :Vec<u8>) {
+fn print_c_string(output :Vec<u8>) -> isize {
     unsafe {
         extern "C" {
             fn puts(s: *const c_char) -> c_int;
@@ -275,15 +273,17 @@ fn print_c_string(output :Vec<u8>) {
         }
         // let mut output_copy = output.clone();
         // output_copy.stdout.push(0);
-        let to_print = CString::new(output);
+        let to_print = CString::new(output.clone());
         check_type(&to_print);
         let to_printf = to_print.clone();
         if (to_print.is_ok() == true) {
             puts(to_printf.clone().unwrap().as_ptr());
             // printf(to_printf.unwrap().as_ptr());
+            return output.len() as isize;
         } else {
             panic!("{}", to_print.unwrap_err())
         }
+        return -1;
         // let slice_to_c_string = String::from_utf8(output_copy.stdout).unwrap();
         // let slice_to_c_string = &slice_to_c_string[0..];
         // let c_string = CStr::from_bytes_with_nul(slice_to_c_string.as_bytes()).unwrap();
