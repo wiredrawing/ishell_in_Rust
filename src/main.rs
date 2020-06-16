@@ -39,8 +39,21 @@ use std::os::raw::{
 //     CStr
 // };
 // use cstr_core::c_char;
-fn main() {
 
+
+// ミュータブルな参照を返却
+fn edit_reference<'a>(aa: &'a mut String, bb: &'a mut String) -> &'a mut String
+{
+    println!("ミュータブルな参照の参照外し{}", *aa);
+
+    aa.push_str("ミュータブルな参照に文字列を追加");
+    return bb;
+}
+
+fn main() {
+    let mut s_with_lifetime_01 = "ライフタイム付きリテラル_01". to_string();
+    let mut s_with_lifetime_02 = "ライフタイム付きリテラル_02". to_string();
+    println!("ライフタイム付き => {}", edit_reference(&mut s_with_lifetime_01, &mut s_with_lifetime_02));
     let mut _s: String = "php".to_string();
     let mut _s_bytes = _s.as_bytes();
     let mut _s_to_string : String = String::from_utf8(_s.as_bytes().to_vec()).unwrap();
