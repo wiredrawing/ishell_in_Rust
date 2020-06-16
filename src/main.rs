@@ -48,7 +48,11 @@ fn main() {
     println!("_s => {}", _s);
 
     // 破壊的メソッド
-    _s.push_str("文字列を追加");
+    let empty : () = _s.push_str("文字列を追加");
+    if empty == () {
+        println!("empty変数はから");
+    }
+
     println!("{}", _s);
 
     let mut default_command : String = "php".to_string();
@@ -224,7 +228,12 @@ fn main() {
                 }
             }
 
-            print_c_string(for_output);
+            let executed_reuslt: Result <String, FromUtf8Error> = String::from_utf8(for_output.clone());
+            if (executed_reuslt.is_ok() == true) {
+                println!("{}", executed_reuslt.unwrap());
+            } else {
+                print_c_string(for_output);
+            }
             // if String::from_utf8(for_output.clone()).is_ok() == true {
             //     // println!("output:> {} \n", String::from_utf8(for_output).unwrap());
             // } else {
