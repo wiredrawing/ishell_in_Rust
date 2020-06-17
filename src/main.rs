@@ -28,45 +28,17 @@ const CLEAR_STRING: &str = "clear";
 const DEL_STRING: &str = "del";
 
 
-use std::ffi::CString;
+use std::ffi::{
+    CString,
+    CStr
+};
 use std::os::raw::{
     c_char,
     c_int,
     c_void
 };
-// use cstr_core::{
-//     CString,
-//     CStr
-// };
-// use cstr_core::c_char;
-
-
-// ミュータブルな参照を返却
-fn edit_reference<'a>(aa: &'a mut String, bb: &'a mut String) -> &'a mut String
-{
-    println!("ミュータブルな参照の参照外し{}", *aa);
-
-    aa.push_str("ミュータブルな参照に文字列を追加");
-    return bb;
-}
 
 fn main() {
-    let mut s_with_lifetime_01 = "ライフタイム付きリテラル_01". to_string();
-    let mut s_with_lifetime_02 = "ライフタイム付きリテラル_02". to_string();
-    println!("ライフタイム付き => {}", edit_reference(&mut s_with_lifetime_01, &mut s_with_lifetime_02));
-    let mut _s: String = "php".to_string();
-    let mut _s_bytes = _s.as_bytes();
-    let mut _s_to_string : String = String::from_utf8(_s.as_bytes().to_vec()).unwrap();
-    println!("_s => {}", _s);
-
-    // 破壊的メソッド NULLではなく empty()が返却される
-    let empty : () = _s.push_str("文字列を追加");
-    if empty == () {
-        println!("empty変数はから");
-    }
-
-    println!("{}", _s);
-
     let mut default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
     let arguments: Vec<String> = env::args().collect();
@@ -133,21 +105,29 @@ fn main() {
         r.store(false, Ordering::SeqCst);
     }).expect("Error setting Ctrl-C handler");
 
-    println!("Waiting for Ctrl-C...");
+    println!("Input any source code with {}.", default_command);
     // while running.load(Ordering::SeqCst) {}
-    println!("Got it! Exiting...");
 
     // コマンドラインからの入力を取
     let mut input : String = String::new();
 
     // 書き込み時の戻り値を保持
     let mut written_bytes : Result<(), Error>;
-
+    let mut line_number: usize = 0;
     while (true) {
-        let mut input_data = std::io::stdin().read_line(&mut input);
-        if input_data.is_ok() != true {
+        println!("{}:", line_number = line_number + 1);
+        line_number = line_number + 1;
+        let
+            input_data
+                : Result<usize, Error>
+                = std::io::stdin().read_line(&mut input);
+
+        // コマンドラインから入力されたbyte数を取得する
+        if input_data.is_ok() != true
+        {
             panic!("error => {}", input_data.unwrap_err());
         }
+        // 入力内容から、改行文字を削除
         remove_newline(&mut input);
 
 
@@ -177,9 +157,9 @@ fn main() {
         }
 
 
-        let target_index : i32= input.len() as i32 - 1;
+        let target_index : i32 = input.len() as i32 - 1;
         if str_position(&input, '\\' as u8) == target_index {
-            continue;
+            // continue;
         }
 
 
@@ -281,26 +261,22 @@ fn print_c_string(output :Vec<u8>) -> isize {
     unsafe {
         extern "C" {
             fn puts(s: *const c_char) -> c_int;
-            // fn printf(fmt: *const c_char, s: *const c_char ) ;
-            fn printf(format: *const c_char) -> c_int;
         }
-        // let mut output_copy = output.clone();
-        // output_copy.stdout.push(0);
-        let to_print = CString::new(output.clone());
-        check_type(&to_print);
-        let to_printf = to_print.clone();
+        // Vectorのサイズを取得
+        let output_size: isize = output.len() as isize;
+
+        // VectorからCStringを生成
+        let to_print = CString::new(output);
+        // check_type(&to_print);
+
+        // 無事にCStringを取り出せたとき
         if (to_print.is_ok() == true) {
-            puts(to_printf.clone().unwrap().as_ptr());
-            // printf(to_printf.unwrap().as_ptr());
-            return output.len() as isize;
+            puts(to_print.unwrap().as_ptr());
+            return output_size;
         } else {
             panic!("{}", to_print.unwrap_err())
         }
         return -1;
-        // let slice_to_c_string = String::from_utf8(output_copy.stdout).unwrap();
-        // let slice_to_c_string = &slice_to_c_string[0..];
-        // let c_string = CStr::from_bytes_with_nul(slice_to_c_string.as_bytes()).unwrap();
-        // println!("{}",  *(c_string as *const c_char));
     }
 }
 
@@ -311,9 +287,6 @@ fn str_position (target : &String, needle : u8) -> i32
 {
     check_type(target.as_bytes().iter().enumerate());
     for (index, value) in target.as_bytes().iter().enumerate() {
-        // println!("index => {}", index);
-        // println!("value => {}", value);
-        // println!("needle => {}", needle);
         if (needle == *value) {
             return (index as i32);
         }
@@ -355,6 +328,6 @@ fn remove_newline(newline_string : &mut String)
 
 
 fn check_type<T>(_: T) -> String {
-    println!("{}", std::any::type_name::<T>());
+    // println!("{}", std::any::type_name::<T>());
     return std::any::type_name::<T>().to_string();
 }
