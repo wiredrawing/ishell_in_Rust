@@ -38,8 +38,10 @@ use std::os::raw::{
     c_void
 };
 
+
 fn main() {
-    let mut default_command : String = "php".to_string();
+
+    let default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
     let arguments: Vec<String> = env::args().collect();
     let command: String;
@@ -49,17 +51,14 @@ fn main() {
         command = "php".to_string();
         // panic!("Select any execute file.");
     }
-
     // 入力されたコマンドが php | ruby | python?
-    let mut initialize_input : String = "".to_string();
-    match command {
-        default_command => {
-            initialize_input = "<?php \r\n".to_string();
-        },
-        _ => {
-            initialize_input.clear();
-        }
+    let mut initialize_input : String;
+
+    initialize_input = "".to_string();
+    if (command == default_command) {
+        initialize_input = "<?php \r\n".to_string();
     }
+
 
 
     // 起動中の自身のプロセスID
@@ -105,7 +104,7 @@ fn main() {
         r.store(false, Ordering::SeqCst);
     }).expect("Error setting Ctrl-C handler");
 
-    println!("Input any source code with {}.", default_command);
+    println!("Input any source code with {}.", command);
     // while running.load(Ordering::SeqCst) {}
 
     // コマンドラインからの入力を取
@@ -164,7 +163,7 @@ fn main() {
 
 
         if (input.len() > 0) {
-            input.push_str("\n print(\"\n\"); \n");
+            input.push_str("\nprint(\"\n\"); \n");
         } else {
             continue;
         }
@@ -176,7 +175,7 @@ fn main() {
         let mut output_result : Result<Output, Error>;
         let mut output : Output;
         if cfg!(windows) {
-            output_result = Command::new(&default_command).args(&[&validate_file_path]).output();
+            output_result = Command::new(&command).args(&[&validate_file_path]).output();
             if (output_result.is_ok() != true) {
                 panic!("{}", output_result.unwrap_err().to_string());
             }
@@ -199,7 +198,7 @@ fn main() {
             }
 
             // 実行用ファイルで再度コマンド実行
-            output_result = Command::new(&default_command).args(&[&execute_file_path]).output();
+            output_result = Command::new(&command).args(&[&execute_file_path]).output();
             if (output_result.is_ok() != true) {
                 panic!("{}", output_result.unwrap_err().to_string());
             }
@@ -218,7 +217,7 @@ fn main() {
                     current_newline_count = current_newline_count + 1;
                 }
             }
-
+            for_output.push(10);
             let executed_reuslt: Result <String, FromUtf8Error> = String::from_utf8(for_output.clone());
             if (executed_reuslt.is_ok() == true) {
                 println!("{}", executed_reuslt.unwrap());
