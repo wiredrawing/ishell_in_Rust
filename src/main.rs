@@ -11,7 +11,8 @@ use std::fs;
 use std::env;
 use std::process::{
     Command,
-    Output
+    Output,
+    Stdio,
 };
 use std::io::{
     Error,
@@ -38,8 +39,16 @@ use std::os::raw::{
     c_void
 };
 
+// echoモジュールを使用
+mod echo;
+// echoモジュール内のecho関数を単独で利用する
+use echo::*;
 
 fn main() {
+
+    let function = | param: String | {
+        echo (&param);
+    };
 
     let default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
@@ -116,10 +125,7 @@ fn main() {
     while (true) {
         println!("{}:", line_number = line_number + 1);
         line_number = line_number + 1;
-        let
-            input_data
-                : Result<usize, Error>
-                = std::io::stdin().read_line(&mut input);
+        let input_data : Result<usize, Error> = std::io::stdin().read_line(&mut input);
 
         // コマンドラインから入力されたbyte数を取得する
         if input_data.is_ok() != true
@@ -134,8 +140,7 @@ fn main() {
         // 入力内容によってループ内の処理を変更する
         // コマンドラインを終了するための処理
         if (EXIT_STRING.to_string() == input) {
-            // インタラクティブシェルの終了コードとして
-            // ループを終了させる
+            // exit
             break;
         } else if (CLEAR_STRING.to_string() == input ) {
             // 正常実行が完了していた直近のソースコードまで巻き上げる
@@ -155,6 +160,8 @@ fn main() {
             // 有効なコマンドとして評価する場合
         }
 
+        // コマンドライン用の処理を通過後再度改行文字を付与する
+        input.push_str("\n");
 
         let target_index : i32 = input.len() as i32 - 1;
         if str_position(&input, '\\' as u8) == target_index {
@@ -162,9 +169,7 @@ fn main() {
         }
 
 
-        if (input.len() > 0) {
-            input.push_str("\nprint(\"\n\"); \n");
-        } else {
+        if (input.len() == 0) {
             continue;
         }
         validate_file.write_all(input.as_bytes());
@@ -184,18 +189,25 @@ fn main() {
         }
 
         output = output_result.unwrap();
-        let mut exit_code : Option<i32> = output.status.code();
+        let exit_code : Option<i32> = output.status.code();
         let mut for_output : Vec<u8> = Vec::new();
         // コマンドの実行結果が 「0」かどうかを検証
         if (exit_code.is_some() == true && exit_code.unwrap() == 0) {
 
             // 検証用ファイルでプログラムが正常終了した場合
-            let temp_file : String = fs::read_to_string(&validate_file_path).unwrap();
+            let mut temp_file : String = fs::read_to_string(&validate_file_path).unwrap();
             execute_file.set_len(0);
+
+            // プログラムが正常終了している場合のみ改行出力を追加
+            temp_file.push_str("\nprint(\"\n\"); \n");
             written_bytes = execute_file.write_all(temp_file.as_bytes());
             if (written_bytes.is_ok() != true) {
                 panic!("Err: {}", written_bytes.unwrap_err().to_string());
             }
+
+            // 検証用ファイルを再度削除し、改行出力を追加した分を再度保存
+            validate_file.set_len(0);
+            written_bytes = validate_file.write_all(temp_file.as_bytes());
 
             // 実行用ファイルで再度コマンド実行
             output_result = Command::new(&command).args(&[&execute_file_path]).output();
@@ -203,46 +215,29 @@ fn main() {
                 panic!("{}", output_result.unwrap_err().to_string());
             }
             output = output_result.unwrap();
-            let exit_code : Option<i32> = output.status.code();
             let mut for_output : Vec<u8> = Vec::new();
-
-            for value in output.stdout {
+            let _output : Vec<u8> = output.stdout;
+            let _enum = _output.iter().enumerate();
+            for (index, value) in _enum {
                 // 前回まで出力した分は破棄する
                 if (previous_newline_count <= current_newline_count) {
-                    for_output.push(value);
+                    for_output.push(*value);
                 }
-                if (value == 10) {
-                    // println!("*value => {}", *value);
-                    // println!("&value => {}", value);
+                if (*value == 10) {
                     current_newline_count = current_newline_count + 1;
                 }
+
             }
             for_output.push(10);
-            let executed_reuslt: Result <String, FromUtf8Error> = String::from_utf8(for_output.clone());
-            if (executed_reuslt.is_ok() == true) {
-                println!("{}", executed_reuslt.unwrap());
+            let executed_result: Result <String, FromUtf8Error> = String::from_utf8(for_output.clone());
+            if (executed_result.is_ok() == true) {
+                println!("{}", executed_result.unwrap());
             } else {
                 print_c_string(for_output);
             }
-            // if String::from_utf8(for_output.clone()).is_ok() == true {
-            //     // println!("output:> {} \n", String::from_utf8(for_output).unwrap());
-            // } else {
-            //     println!("Err1: Failed to be executed the command which you input on background!");
-            //     println!("Err1: {}", String::from_utf8(for_output).unwrap_err());
-            // }
-
             previous_newline_count = current_newline_count;
             current_newline_count = 0;
         } else {
-            // 入力したプログラムの実行が失敗した場合
-            // let mut backup_contents : Result<String, Error>;
-            // backup_contents = fs::read_to_string(&execute_file_path);
-            // if (backup_contents . is_ok() == true) {
-            //     let backup_contents = backup_contents.unwrap();
-            //     validate_file.set_len(0);
-            //     validate_file.write_all(backup_contents.as_bytes());
-            // }
-
             println!("Err2: Failed to be executed the command which you input on background!");
             println!("Err2: {}", String::from_utf8(output.stderr).unwrap());
         }
@@ -252,31 +247,6 @@ fn main() {
     println!("See you again!");
     // u32型から => i32型へキャスト
     process::exit(my_pid as i32);
-}
-
-
-
-fn print_c_string(output :Vec<u8>) -> isize {
-    unsafe {
-        extern "C" {
-            fn puts(s: *const c_char) -> c_int;
-        }
-        // Vectorのサイズを取得
-        let output_size: isize = output.len() as isize;
-
-        // VectorからCStringを生成
-        let to_print = CString::new(output);
-        // check_type(&to_print);
-
-        // 無事にCStringを取り出せたとき
-        if (to_print.is_ok() == true) {
-            puts(to_print.unwrap().as_ptr());
-            return output_size;
-        } else {
-            panic!("{}", to_print.unwrap_err())
-        }
-        return -1;
-    }
 }
 
 
@@ -324,7 +294,6 @@ fn remove_newline(newline_string : &mut String)
         }
     }
 }
-
 
 fn check_type<T>(_: T) -> String {
     // println!("{}", std::any::type_name::<T>());
