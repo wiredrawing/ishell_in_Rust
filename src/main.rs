@@ -33,11 +33,11 @@ use std::ffi::{
     CString,
     CStr
 };
-// use std::os::raw::{
-//     c_char,
-//     c_int,
-//     c_void
-// };
+use std::os::raw::{
+    c_char,
+    c_int,
+    c_void
+};
 
 use std::io::prelude::*;
 
@@ -49,39 +49,55 @@ use echo::*;
 
 use std::io::BufReader;
 
-
+use printf_rs::*;
 
 /// ファイルからbytesを読み込んでいく。
 fn get_file_resource (path: &String) -> Vec<u8> {
     let mut read_bytes : Vec<u8> = Vec::new();
     let f : Result<std::fs::File, Error> = fs::File::open(path);
     if f.is_ok() != true {
+        /// panicせずにエラーのみを表示
+        println!("Err {}", f.unwrap_err());
         return read_bytes;
     }
     let f = f.unwrap();
-    for value in f.bytes() {
+    let byte_list = f.bytes();
+    for value in byte_list {
         read_bytes.push(value.unwrap());
     }
     return read_bytes;
 }
 
+pub fn printf_c_string(output : Vec<u8>) -> isize {
+
+    unsafe {
+        extern "C" {
+            fn printf(format: *const c_char, args: *mut c_void) -> String;
+        }
+
+        let c_percent = (CString::new("%s".to_string()).unwrap().as_ptr()) as *const c_char;
+
+        let c_string = (CString::new(output).unwrap().as_ptr()) as *mut c_void;
+
+        printf(c_percent, c_string);
+    }
+    return -1;
+}
+
 
 fn main() {
 
-    // shift_jisのファイルを開く
-    // let shift_jis = fs::File::open("./shift_jis.dat").unwrap();
-    let get_file_resource = get_file_resource(&"./shift_jis.dat".to_string());
-    // println!("{:?}", t);
-    print_c_string(get_file_resource);
-    // for value in buf.lines() {
-    //     print_c_string(value.unwrap().as_bytes().to_vec());
-    // }
+    // printf!("%s \n", cstr!("Hello World !")); // print string
+    // printf!("%i \n", 1234); // print integer
+    printf_c_string(get_file_resource(&"./shift_jis.dat".to_string()));
+
 
     let default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
     let arguments: Vec<String> = env::args().collect();
     let command: String;
-    if (arguments.len() >= 2) {
+    if arguments.len() >= 2
+    {
         command = arguments.get(1).unwrap().to_string();
     } else {
         command = "php".to_string();
@@ -91,7 +107,7 @@ fn main() {
     let mut initialize_input : String;
 
     initialize_input = "".to_string();
-    if (command == default_command) {
+    if command == default_command {
         initialize_input = "<?php \r\n".to_string();
     }
 

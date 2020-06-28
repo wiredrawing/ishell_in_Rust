@@ -3,7 +3,8 @@
 use std::os::raw::c_int;
 use std::os::raw::c_char;
 use std::ffi::*;
-
+use std::str;
+use printf::printf;
 // 引数に渡したString参照を出力する
 pub fn echo (target : &String )
 {

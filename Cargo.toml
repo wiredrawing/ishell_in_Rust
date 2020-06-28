@@ -13,6 +13,7 @@ tempdir = "*"
 cstr_core = "*"
 libc = "*"
 printf = "*"
+printf-rs = "*"
 
 [profile.release]
 opt-level = 3

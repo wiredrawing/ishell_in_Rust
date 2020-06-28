@@ -68,6 +68,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazy_static"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+
+[[package]]
 name = "libc"
 version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -105,6 +111,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "15343a566c054c72bdc3f3f138002a87e5320d7389c9713112c9b77e83539141"
 dependencies = [
  "gcc",
+ "libc",
+]
+
+[[package]]
+name = "printf-rs"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ed6caac5c1aed1ab45e1d8197ee0543d5edf3fac7bcdbb74dd3d0e8e06e3094"
+dependencies = [
+ "lazy_static",
  "libc",
 ]
 
@@ -209,6 +225,7 @@ dependencies = [
  "ctrlc",
  "libc",
  "printf",
+ "printf-rs",
  "tempdir",
  "tempfile",
 ]
