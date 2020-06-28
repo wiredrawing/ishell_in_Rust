@@ -33,18 +33,49 @@ use std::ffi::{
     CString,
     CStr
 };
-use std::os::raw::{
-    c_char,
-    c_int,
-    c_void
-};
+// use std::os::raw::{
+//     c_char,
+//     c_int,
+//     c_void
+// };
+
+use std::io::prelude::*;
+
 
 // echoモジュールを使用
 mod echo;
 // echoモジュール内のecho関数を単独で利用する
 use echo::*;
 
+use std::io::BufReader;
+
+
+
+/// ファイルからbytesを読み込んでいく。
+fn get_file_resource (path: &String) -> Vec<u8> {
+    let mut read_bytes : Vec<u8> = Vec::new();
+    let f : Result<std::fs::File, Error> = fs::File::open(path);
+    if f.is_ok() != true {
+        return read_bytes;
+    }
+    let f = f.unwrap();
+    for value in f.bytes() {
+        read_bytes.push(value.unwrap());
+    }
+    return read_bytes;
+}
+
+
 fn main() {
+
+    // shift_jisのファイルを開く
+    // let shift_jis = fs::File::open("./shift_jis.dat").unwrap();
+    let get_file_resource = get_file_resource(&"./shift_jis.dat".to_string());
+    // println!("{:?}", t);
+    print_c_string(get_file_resource);
+    // for value in buf.lines() {
+    //     print_c_string(value.unwrap().as_bytes().to_vec());
+    // }
 
     let default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
@@ -216,9 +247,8 @@ fn main() {
             if (output_result.is_ok() != true) {
                 panic!("{}", output_result.unwrap_err().to_string());
             }
-            output = output_result.unwrap();
+            let _output : Vec<u8> = output_result.unwrap().stdout;
             let mut for_output : Vec<u8> = Vec::new();
-            let _output : Vec<u8> = output.stdout;
             let _enum = _output.iter().enumerate();
             for (index, value) in _enum {
                 // 前回まで出力した分は破棄する
@@ -267,14 +297,13 @@ fn create_new_file (path : &String ) -> std::fs::File
 }
 
 
-/// 引数に渡したファイルパスが存在していれば、削除
-/// しなければ、パニックを起こす。
+/// 引数に渡したファイルパスが存在していれば、削除。
+/// できなければパニックを起こす。
 fn remove_target_file (path : &String) -> bool
 {
     use std::path::Path;
     // Pathオブジェクトを作成
     let target_path : &Path = Path :: new (path);
-
     // ファイルが存在しない場合、panicを起こす
     if (target_path.exists() != true) {
         panic!("Failed to remove the file named {} which you selected.", path);
@@ -286,7 +315,8 @@ fn remove_target_file (path : &String) -> bool
 /// 含まれない場合 -1の負の数を返却する
 fn str_position (target : &String, needle : u8) -> i32
 {
-    check_type(target.as_bytes().iter().enumerate());
+    let temp = target.as_bytes().iter().enumerate();
+    check_type(&temp);
     for (index, value) in target.as_bytes().iter().enumerate() {
         if (needle == *value) {
             return (index as i32);
@@ -328,7 +358,7 @@ fn remove_newline(newline_string : &mut String)
 }
 
 /// オブジェクトの型チェック
-fn check_type<T>(_: T) -> String {
+fn check_type<T>(_: &T) -> String {
     // println!("{}", std::any::type_name::<T>());
     return std::any::type_name::<T>().to_string();
 }
