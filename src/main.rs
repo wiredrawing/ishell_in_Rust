@@ -63,33 +63,62 @@ fn get_file_resource (path: &String) -> Vec<u8> {
     let f = f.unwrap();
     let byte_list = f.bytes();
     for value in byte_list {
-        read_bytes.push(value.unwrap());
+        let t = value.unwrap();
+        println!(" - {} - ", &t);
+        read_bytes.push(t);
     }
     return read_bytes;
 }
 
-pub fn printf_c_string(output : Vec<u8>) -> isize {
 
-    unsafe {
-        extern "C" {
-            fn printf(format: *const c_char, args: *mut c_void) -> String;
-        }
 
-        let c_percent = (CString::new("%s".to_string()).unwrap().as_ptr()) as *const c_char;
+// pub fn printf_c_string(output : Vec<u8>) -> isize {
 
-        let c_string = (CString::new(output).unwrap().as_ptr()) as *mut c_void;
+//     unsafe {
+//         extern "C" {
+//             fn printf(format: *const libc::c_char, ...) -> libc::c_int;
+//         }
 
-        printf(c_percent, c_string);
-    }
-    return -1;
+//         let c_percent = (CString::new("%s".to_string()).unwrap().as_c_str().as_ptr()) as *const c_char;
+
+//         let c_string = (CString::new(output).unwrap().as_c_str().as_ptr()) as *const c_char;
+
+//         printf(c_percent);
+//     }
+//     return -1;
+// }
+
+
+extern "C" {
+    fn puts(s: *const c_char) -> c_int;
+    fn putchar(s: c_int) -> c_int;
 }
-
 
 fn main() {
 
+
+    // unsafe {
+    //     extern "C" {
+    //         fn putchar(s: c_int) -> c_int;
+    //     }
+    //     // // Vectorのサイズを取得
+    //     // let output_size: isize = output.len() as isize;
+
+    //     // // VectorからCStringを生成
+    //     // let to_print = CString::new(output);
+    //     // // check_type(&to_print);
+
+    //     // 無事にCStringを取り出せたとき
+    //     // if (to_print.is_ok() == true) {
+    //         echo (&"putchar関数を実行".to_string());
+    //         putchar(147);putchar(250);putchar(150);putchar(123);            echo (&"putchar関数を実行".to_string());            // } else {
+    //     //     // panic!("{}", to_print.unwrap_err())
+    //     // }
+    // }
+
     // printf!("%s \n", cstr!("Hello World !")); // print string
     // printf!("%i \n", 1234); // print integer
-    printf_c_string(get_file_resource(&"./shift_jis.dat".to_string()));
+    print_c_string(get_file_resource(&"./shift_jis.dat".to_string()));
 
 
     let default_command : String = "php".to_string();
@@ -270,6 +299,9 @@ fn main() {
                 // 前回まで出力した分は破棄する
                 if (previous_newline_count <= current_newline_count) {
                     for_output.push(*value);
+                    unsafe {
+                        putchar(*value as c_int);
+                    }
                 }
                 if (*value == 10) {
                     current_newline_count = current_newline_count + 1;

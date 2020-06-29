@@ -11,7 +11,7 @@ ctrlc = "*"
 tempfile = "*"
 tempdir = "*"
 cstr_core = "*"
-libc = "*"
+libc = "0.2.71"
 printf = "*"
 printf-rs = "*"
 

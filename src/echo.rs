@@ -24,6 +24,7 @@ fn print_c_string(output :Vec<u8>) -> isize {
     unsafe {
         extern "C" {
             fn puts(s: *const c_char) -> c_int;
+            fn putchar(s: c_int) -> c_int;
         }
         // Vectorのサイズを取得
         let output_size: isize = output.len() as isize;
