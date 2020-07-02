@@ -49,22 +49,28 @@ use echo::*;
 
 use std::io::BufReader;
 
-use printf_rs::*;
 
+
+
+/// UTF-8以外の文字列を読み出したい場合
 /// ファイルからbytesを読み込んでいく。
 fn get_file_resource (path: &String) -> Vec<u8> {
+
+    // 読み出し用vec
     let mut read_bytes : Vec<u8> = Vec::new();
     let f : Result<std::fs::File, Error> = fs::File::open(path);
+
+    // ファイルのopenに失敗した場合、パニック!
     if f.is_ok() != true {
-        /// panicせずにエラーのみを表示
-        println!("Err {}", f.unwrap_err());
-        return read_bytes;
+        panic!("Error: {}", f.unwrap_err());
     }
+
     let f = f.unwrap();
+
     let byte_list = f.bytes();
+
     for value in byte_list {
         let t = value.unwrap();
-        println!(" - {} - ", &t);
         read_bytes.push(t);
     }
     return read_bytes;
@@ -72,54 +78,12 @@ fn get_file_resource (path: &String) -> Vec<u8> {
 
 
 
-// pub fn printf_c_string(output : Vec<u8>) -> isize {
-
-//     unsafe {
-//         extern "C" {
-//             fn printf(format: *const libc::c_char, ...) -> libc::c_int;
-//         }
-
-//         let c_percent = (CString::new("%s".to_string()).unwrap().as_c_str().as_ptr()) as *const c_char;
-
-//         let c_string = (CString::new(output).unwrap().as_c_str().as_ptr()) as *const c_char;
-
-//         printf(c_percent);
-//     }
-//     return -1;
-// }
-
-
+/// C言語のc_intサイズで文字出力をするため
 extern "C" {
-    fn puts(s: *const c_char) -> c_int;
     fn putchar(s: c_int) -> c_int;
 }
 
 fn main() {
-
-
-    // unsafe {
-    //     extern "C" {
-    //         fn putchar(s: c_int) -> c_int;
-    //     }
-    //     // // Vectorのサイズを取得
-    //     // let output_size: isize = output.len() as isize;
-
-    //     // // VectorからCStringを生成
-    //     // let to_print = CString::new(output);
-    //     // // check_type(&to_print);
-
-    //     // 無事にCStringを取り出せたとき
-    //     // if (to_print.is_ok() == true) {
-    //         echo (&"putchar関数を実行".to_string());
-    //         putchar(147);putchar(250);putchar(150);putchar(123);            echo (&"putchar関数を実行".to_string());            // } else {
-    //     //     // panic!("{}", to_print.unwrap_err())
-    //     // }
-    // }
-
-    // printf!("%s \n", cstr!("Hello World !")); // print string
-    // printf!("%i \n", 1234); // print integer
-    print_c_string(get_file_resource(&"./shift_jis.dat".to_string()));
-
 
     let default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
@@ -212,7 +176,10 @@ fn main() {
             remove_target_file(&validate_file_path);
             // 再度検証用ファイルを作成
             validate_file = create_new_file(&validate_file_path);
-            validate_file.write_all(backup_string.as_bytes());
+            let response : Result<(), Error> = validate_file.write_all(backup_string.as_bytes());
+            if (response.is_ok() != true) {
+                panic!("Error: {}", response.unwrap_err());
+            }
             input.clear();
             continue;
         } else if (DEL_STRING.to_string() == input) {
@@ -248,7 +215,11 @@ fn main() {
         if (input.len() == 0) {
             continue;
         }
-        validate_file.write_all(input.as_bytes());
+
+        let response = validate_file.write_all(input.as_bytes());
+        if response.is_ok() != true  {
+            panic!("Error: {}", response.unwrap_err());
+        }
 
 
 
@@ -279,7 +250,7 @@ fn main() {
             execute_file = create_new_file(&execute_file_path);
             written_bytes = execute_file.write_all(temp_file.as_bytes());
             if (written_bytes.is_ok() != true) {
-                panic!("Err: {}", written_bytes.unwrap_err().to_string());
+                panic!("Error: {}", written_bytes.unwrap_err().to_string());
             }
 
             // 検証用ファイルを再度削除し、改行出力を追加した分を再度保存
@@ -299,9 +270,6 @@ fn main() {
                 // 前回まで出力した分は破棄する
                 if (previous_newline_count <= current_newline_count) {
                     for_output.push(*value);
-                    unsafe {
-                        putchar(*value as c_int);
-                    }
                 }
                 if (*value == 10) {
                     current_newline_count = current_newline_count + 1;
@@ -313,13 +281,13 @@ fn main() {
             if (executed_result.is_ok() == true) {
                 println!("{}", executed_result.unwrap());
             } else {
-                print_c_string(for_output);
+                printf_c_string(for_output);
             }
             previous_newline_count = current_newline_count;
             current_newline_count = 0;
         } else {
-            println!("Err2: Failed to be executed the command which you input on background!");
-            println!("Err2: {}", String::from_utf8(output.stderr).unwrap());
+            println!("Error: Failed to be executed the command which you input on background!");
+            println!("Error: {}", String::from_utf8(output.stderr).unwrap());
         }
         input.clear();
     }
@@ -338,7 +306,7 @@ fn create_new_file (path : &String ) -> std::fs::File
 
     if (new_file.is_ok() != true) {
         // パニックでプロセスを落とす
-        println!("Err {}", new_file.unwrap_err());
+        println!("Error {}", new_file.unwrap_err());
         panic!("Failed new file named {}", path);
     }
     return new_file.unwrap();

@@ -5,26 +5,28 @@ use std::os::raw::c_char;
 use std::ffi::*;
 use std::str;
 use printf::printf;
-// 引数に渡したString参照を出力する
-pub fn echo (target : &String )
+
+
+/// 引数に渡したString参照を出力する
+pub fn echo (target : &String ) -> usize
 {
+    let target_length : usize = target.len();
     println!("{}", target);
+    return target_length;
 }
 
 
-// 簡易にデバッグを実行する(trait境界も記述)
+/// 簡易にデバッグを実行する(trait境界も記述)
 pub fn dump<T>(target: T)  -> () where T : std::fmt::Debug {
     println!("{:?}", target);
     // 空のユニット型を返却する
-    return ();
+    return;
 }
 
-pub
-fn print_c_string(output :Vec<u8>) -> isize {
+pub fn print_c_string(output :Vec<u8>) -> isize {
     unsafe {
         extern "C" {
             fn puts(s: *const c_char) -> c_int;
-            fn putchar(s: c_int) -> c_int;
         }
         // Vectorのサイズを取得
         let output_size: isize = output.len() as isize;
@@ -40,7 +42,6 @@ fn print_c_string(output :Vec<u8>) -> isize {
         } else {
             panic!("{}", to_print.unwrap_err())
         }
-        return -1;
     }
 }
 
@@ -53,11 +54,24 @@ pub fn printf_c_string(output: Vec<u8>) -> isize {
             fn printf(format: *const c_char, args: *mut c_void) -> c_int;
         }
 
-        let c_percent = CString::new("%s".to_string()).unwrap();
-        let c_percent_ptr = c_percent.as_ptr() as *const c_char;
+        let c_percent_result : Result<CString, NulError> = CString::new("%s".to_string());
+        // エラーハンドリング
+        if c_percent_result.is_ok() != true
+        {
+            panic!("Error: {}", c_percent_result.unwrap_err());
+        }
 
-        let c_string = CString::new(output).unwrap();
-        let c_string_ptr = c_string.as_ptr() as *mut c_void;
+        // Resultから中身を取り出す
+        let c_percent_ptr = c_percent_result.unwrap().as_ptr() as *const c_char;
+
+
+        let c_string_result :Result<CString, NulError> = CString::new(output);
+        // エラーハンドリング
+        if c_string_result.is_ok() != true
+        {
+            panic!("Error: {}", c_string_result.unwrap_err());
+        }
+        let c_string_ptr = c_string_result.unwrap().as_ptr() as *mut c_void;
 
         printf(c_percent_ptr, c_string_ptr);
     }
