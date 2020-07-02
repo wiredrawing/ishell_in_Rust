@@ -43,3 +43,23 @@ fn print_c_string(output :Vec<u8>) -> isize {
         return -1;
     }
 }
+
+
+/// printf関数の実装作業
+pub fn printf_c_string(output: Vec<u8>) -> isize {
+    unsafe {
+        #[link(name="legacy_stdio_definitions", kind="static")]
+        extern "C" {
+            fn printf(format: *const c_char, args: *mut c_void) -> c_int;
+        }
+
+        let c_percent = CString::new("%s".to_string()).unwrap();
+        let c_percent_ptr = c_percent.as_ptr() as *const c_char;
+
+        let c_string = CString::new(output).unwrap();
+        let c_string_ptr = c_string.as_ptr() as *mut c_void;
+
+        printf(c_percent_ptr, c_string_ptr);
+    }
+    return -1;
+}
