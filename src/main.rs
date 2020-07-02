@@ -150,7 +150,7 @@ fn main() {
     let mut written_bytes : Result<(), Error>;
     let mut line_number: usize = 0;
     while (true) {
-        println!("{}:", line_number = line_number + 1);
+        println!("> ");
         line_number = line_number + 1;
         let input_data : Result<usize, Error> = std::io::stdin().read_line(&mut input);
 
@@ -267,6 +267,10 @@ fn main() {
             let mut for_output : Vec<u8> = Vec::new();
             let _enum = _output.iter().enumerate();
             for (index, value) in _enum {
+                // NULLバイトは除外
+                if (*value == 0 ) {
+                    continue;
+                }
                 // 前回まで出力した分は破棄する
                 if (previous_newline_count <= current_newline_count) {
                     for_output.push(*value);
@@ -281,7 +285,8 @@ fn main() {
             if (executed_result.is_ok() == true) {
                 println!("{}", executed_result.unwrap());
             } else {
-                printf_c_string(for_output);
+                printf_c_string(for_output.clone());
+                //_printf_c_string(for_output);
             }
             previous_newline_count = current_newline_count;
             current_newline_count = 0;

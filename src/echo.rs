@@ -54,24 +54,11 @@ pub fn printf_c_string(output: Vec<u8>) -> isize {
             fn printf(format: *const c_char, args: *mut c_void) -> c_int;
         }
 
-        let c_percent_result : Result<CString, NulError> = CString::new("%s".to_string());
-        // エラーハンドリング
-        if c_percent_result.is_ok() != true
-        {
-            panic!("Error: {}", c_percent_result.unwrap_err());
-        }
+        let c_percent = CString::new("%s".to_string()).unwrap();
+        let c_percent_ptr = c_percent.as_ptr() as *const c_char;
 
-        // Resultから中身を取り出す
-        let c_percent_ptr = c_percent_result.unwrap().as_ptr() as *const c_char;
-
-
-        let c_string_result :Result<CString, NulError> = CString::new(output);
-        // エラーハンドリング
-        if c_string_result.is_ok() != true
-        {
-            panic!("Error: {}", c_string_result.unwrap_err());
-        }
-        let c_string_ptr = c_string_result.unwrap().as_ptr() as *mut c_void;
+        let c_string = CString::new(output).unwrap();
+        let c_string_ptr = c_string.as_ptr() as *mut c_void;
 
         printf(c_percent_ptr, c_string_ptr);
     }
