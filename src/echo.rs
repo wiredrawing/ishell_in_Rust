@@ -4,6 +4,7 @@ use std::os::raw::c_int;
 use std::os::raw::c_char;
 use std::ffi::*;
 use std::str;
+use std::io::prelude::*;
 use printf::printf;
 
 
@@ -63,4 +64,29 @@ pub fn printf_c_string(output: Vec<u8>) -> isize {
         printf(c_percent_ptr, c_string_ptr);
     }
     return -1;
+}
+
+
+pub fn get_command_line () -> String
+{
+    // コマンドラインからの入力を取
+    let input : String;
+    let input_data = std::io::stdin().bytes();
+    let mut ensure_bytes: Vec<u8> = Vec::new();
+
+    let mut temporary_u : u8;
+    // 延々と入力がループするので、任意のbyteで breakする
+    for value
+    in input_data {
+        temporary_u = value.unwrap();
+        if (temporary_u == 10) {
+            break;
+        }
+        ensure_bytes.push(temporary_u);
+    }
+
+    // Vec<u8>をString型に変換し返却する
+    return String
+    ::
+    from_utf8(ensure_bytes).unwrap();
 }

@@ -143,23 +143,35 @@ fn main() {
     println!("Input any source code with {}.", command);
     // while running.load(Ordering::SeqCst) {}
 
-    // コマンドラインからの入力を取
-    let mut input : String = String::new();
 
     // 書き込み時の戻り値を保持
     let mut written_bytes : Result<(), Error>;
-    let mut line_number: usize = 0;
-    while (true) {
-        println!("> ");
-        line_number = line_number + 1;
-        let input_data : Result<usize, Error> = std::io::stdin().read_line(&mut input);
 
-        // コマンドラインから入力されたbyte数を取得する
-        if input_data.is_ok() != true
-        {
-            panic!("error => {}", input_data.unwrap_err());
-        }
-        // 入力内容から、改行文字を削除
+
+    while true
+    {
+        // コマンドラインからの入力を取
+        println!(">>> ");
+        let mut input : String = get_command_line();
+        // let input_data : Result<usize, Error> = std::io::stdin().read_line(&mut input);
+        // let input_data  = std::io::stdin().bytes();
+        // let mut ensure_bytes: Vec<u8> = Vec::new();
+        // for value in input_data {
+        //     let temp: u8 = value.unwrap();
+        //     // 改行文字があったらブレイク
+        //     if temp == 10
+        //     {
+        //         break;
+        //     }
+        //     ensure_bytes.push(temp);
+        // }
+        // input = String::from_utf8(ensure_bytes).unwrap();
+        // // コマンドラインから入力されたbyte数を取得する
+        // if input_data.is_ok() != true
+        // {
+        //     panic!("error => {}", input_data.unwrap_err());
+        // }
+        // // 入力内容から、改行文字を削除
         remove_newline(&mut input);
 
 
@@ -294,7 +306,7 @@ fn main() {
             println!("Error: Failed to be executed the command which you input on background!");
             println!("Error: {}", String::from_utf8(output.stderr).unwrap());
         }
-        input.clear();
+        // input.clear();
     }
     // 終了コマンド実行後----
     println!("See you again!");
