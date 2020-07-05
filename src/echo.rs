@@ -48,7 +48,7 @@ pub fn print_c_string(output :Vec<u8>) -> isize {
 
 
 /// printf関数の実装作業
-pub fn printf_c_string(output: Vec<u8>) -> isize {
+pub fn _printf_c_string(output: Vec<u8>) -> isize {
     unsafe {
         #[link(name="legacy_stdio_definitions", kind="static")]
         extern "C" {
