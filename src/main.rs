@@ -80,7 +80,7 @@ fn get_file_resource (path: &String) -> Vec<u8> {
 
 /// C言語のc_intサイズで文字出力をするため
 extern "C" {
-    fn putchar(s: c_int) -> c_int;
+    fn putchar(s: c_int);
 }
 
 fn main() {
@@ -195,6 +195,11 @@ fn main() {
             // 有効なコマンドとして評価する場合
         }
 
+
+        if (input.len() == 0) {
+            continue;
+        }
+
         // コマンドライン用の処理を通過後再度改行文字を付与する
         input.push_str("\n");
 
@@ -204,9 +209,6 @@ fn main() {
         }
 
 
-        if (input.len() == 0) {
-            continue;
-        }
 
         let response = validate_file.write_all(input.as_bytes());
         if response.is_ok() != true  {
@@ -229,7 +231,7 @@ fn main() {
 
         output = output_result.unwrap();
         let exit_code : Option<i32> = output.status.code();
-        let mut for_output : Vec<u8> = Vec::new();
+        // let mut for_output : Vec<u8> = Vec::new();
         // コマンドの実行結果が 「0」かどうかを検証
         if (exit_code.is_some() == true && exit_code.unwrap() == 0) {
 
@@ -251,40 +253,22 @@ fn main() {
             written_bytes = validate_file.write_all(temp_file.as_bytes());
 
             // 実行用ファイルで再度コマンド実行
-            let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().unwrap().stdout.unwrap().bytes();
-            for value in process {
-                unsafe {
-                    putchar(value.unwrap() as c_int);
-                }
-            }
-            return;
-            if (output_result.is_ok() != true) {
-                panic!("{}", output_result.unwrap_err().to_string());
-            }
-            let _output : Vec<u8> = output_result.unwrap().stdout;
-            let mut for_output : Vec<u8> = Vec::new();
-            let _enum = _output.iter().enumerate();
-            for (index, value) in _enum {
+            let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().expect("Failed getting output data written to standard output.");
+            for value in process.stdout.unwrap().bytes() {
+                let inner_value = value.unwrap();
                 // NULLバイトは除外
-                if (*value == 0 ) {
+                if (inner_value == 0 ) {
                     continue;
                 }
                 // 前回まで出力した分は破棄する
                 if (previous_newline_count <= current_newline_count) {
-                    for_output.push(*value);
+                    unsafe {
+                        putchar(inner_value as c_int);
+                    }
                 }
-                if (*value == 10) {
+                if (inner_value == 10) {
                     current_newline_count = current_newline_count + 1;
                 }
-
-            }
-            for_output.push(10);
-            let executed_result: Result <String, FromUtf8Error> = String::from_utf8(for_output.clone());
-            if (executed_result.is_ok() == true) {
-                println!("{}", executed_result.unwrap());
-            } else {
-                // printf_c_string(for_output.clone());
-                _printf_c_string(for_output);
             }
             previous_newline_count = current_newline_count;
             current_newline_count = 0;
@@ -292,7 +276,6 @@ fn main() {
             println!("Error: Failed to be executed the command which you input on background!");
             println!("Error: {}", String::from_utf8(output.stderr).unwrap());
         }
-        // input.clear();
     }
     // 終了コマンド実行後----
     println!("See you again!");
