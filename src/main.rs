@@ -217,8 +217,8 @@ fn main() {
 
 
         // 以下よりphpコマンドの実行
-        let mut output_result : Result<Output, Error>;
-        let mut output : Output;
+        // let mut output_result : Result<Output, Error>;
+        // let mut output : Output;
         let ecode: ExitStatus;
         if cfg!(windows) {
             let mut child_process  = Command::new(&command)
@@ -227,7 +227,9 @@ fn main() {
                 .spawn()
                 .expect("Failed getting output data written to standard output.");
             ecode = child_process.wait().expect("Failed getting output data written to standard output.");
-            child_process.kill();
+            if child_process.kill().unwrap() != () {
+                echo (&"Could not fail to exit sub process.".to_string());
+            }
             if ecode.success() == true {
                 // 検証用ファイルでプログラムが正常終了した場合
                 let mut temp_file : String = fs::read_to_string(&validate_file_path).unwrap();
