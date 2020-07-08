@@ -227,9 +227,14 @@ fn main() {
                 .spawn()
                 .expect("Failed getting output data written to standard output.");
             ecode = child_process.wait().expect("Failed getting output data written to standard output.");
-            // if child_process.kill().unwrap() != () {
+
+            // sub processを殺す
+            // let dead_child_process = child_process.kill();
+            // if dead_child_process.is_ok( ) != true
+            // {
             //     echo (&"Could not fail to exit sub process.".to_string());
             // }
+
             if ecode.success() == true {
                 // 検証用ファイルでプログラムが正常終了した場合
                 let mut temp_file : String = fs::read_to_string(&validate_file_path).unwrap();

@@ -9,19 +9,21 @@ use printf::printf;
 
 
 /// 引数に渡したString参照を出力する
-pub fn echo (target : &String ) -> usize
+/// 戻りはUnit型を返却
+pub fn echo (target : &String ) -> ()
 {
     let target_length : usize = target.len();
     println!("{}", target);
-    return target_length;
+    return ();
 }
 
 
 /// 簡易にデバッグを実行する(trait境界も記述)
+/// 戻りはUnit型を返却
 pub fn dump<T>(target: T)  -> () where T : std::fmt::Debug {
     println!("{:?}", target);
     // 空のユニット型を返却する
-    return;
+    return () ;
 }
 
 pub fn print_c_string(output :Vec<u8>) -> isize {
