@@ -13,13 +13,13 @@ use std::process::{
     Command,
     Output,
     Stdio,
+    ExitStatus,
 };
 use std::io::{
     Error,
-    Write
+    Write,
 };
 
-use std::env::temp_dir;
 use std::path::PathBuf;
 
 
@@ -47,7 +47,6 @@ mod echo;
 // echoモジュール内のecho関数を単独で利用する
 use echo::*;
 
-use std::io::BufReader;
 
 
 
@@ -220,62 +219,70 @@ fn main() {
         // 以下よりphpコマンドの実行
         let mut output_result : Result<Output, Error>;
         let mut output : Output;
+        let ecode: ExitStatus;
         if cfg!(windows) {
-            output_result = Command::new(&command).args(&[&validate_file_path]).output();
-            if (output_result.is_ok() != true) {
-                panic!("{}", output_result.unwrap_err().to_string());
+            let mut child_process  = Command::new(&command)
+                .args(&[&validate_file_path])
+                .stdout(Stdio::null())
+                .spawn()
+                .expect("Failed getting output data written to standard output.");
+            ecode = child_process.wait().expect("Failed getting output data written to standard output.");
+            child_process.kill();
+            if ecode.success() == true {
+                // 検証用ファイルでプログラムが正常終了した場合
+                let mut temp_file : String = fs::read_to_string(&validate_file_path).unwrap();
+
+                // プログラムが正常終了している場合のみ改行出力を追加
+                temp_file.push_str("\nprint(\"\n\"); \n");
+                remove_target_file(&execute_file_path);
+                execute_file = create_new_file(&execute_file_path);
+                written_bytes = execute_file.write_all(temp_file.as_bytes());
+                if (written_bytes.is_ok() != true) {
+                    panic!("Error: {}", written_bytes.unwrap_err().to_string());
+                }
+
+                // 検証用ファイルを再度削除し、改行出力を追加した分を再度保存
+                remove_target_file(&validate_file_path);
+                validate_file = create_new_file(&validate_file_path);
+                written_bytes = validate_file.write_all(temp_file.as_bytes());
+
+                // 実行用ファイルで再度コマンド実行
+                let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().expect("Failed getting output data written to standard output.");
+                for value in process.stdout.unwrap().bytes() {
+                    let inner_value = value.unwrap();
+                    // NULLバイトは除外
+                    if (inner_value == 0 ) {
+                        continue;
+                    }
+                    // 前回まで出力した分は破棄する
+                    if (previous_newline_count <= current_newline_count) {
+                        unsafe {
+                            putchar(inner_value as c_int);
+                        }
+                    }
+                    if (inner_value == 10) {
+                        current_newline_count = current_newline_count + 1;
+                    }
+                }
+                previous_newline_count = current_newline_count;
+                current_newline_count = 0;
+            } else {
+                panic!("Invalid Exit code.");
             }
         } else {
             panic!("Your machine is unsupported.");
         }
+        // output = output_result.unwrap();
+        // let exit_code : Option<i32> = output.status.code();
+        // // let mut for_output : Vec<u8> = Vec::new();
+        // // コマンドの実行結果が 「0」かどうかを検証
+        // if (exit_code.is_some() == true && exit_code.unwrap() == 0) {
 
-        output = output_result.unwrap();
-        let exit_code : Option<i32> = output.status.code();
-        // let mut for_output : Vec<u8> = Vec::new();
-        // コマンドの実行結果が 「0」かどうかを検証
-        if (exit_code.is_some() == true && exit_code.unwrap() == 0) {
 
-            // 検証用ファイルでプログラムが正常終了した場合
-            let mut temp_file : String = fs::read_to_string(&validate_file_path).unwrap();
-
-            // プログラムが正常終了している場合のみ改行出力を追加
-            temp_file.push_str("\nprint(\"\n\"); \n");
-            remove_target_file(&execute_file_path);
-            execute_file = create_new_file(&execute_file_path);
-            written_bytes = execute_file.write_all(temp_file.as_bytes());
-            if (written_bytes.is_ok() != true) {
-                panic!("Error: {}", written_bytes.unwrap_err().to_string());
-            }
-
-            // 検証用ファイルを再度削除し、改行出力を追加した分を再度保存
-            remove_target_file(&validate_file_path);
-            validate_file = create_new_file(&validate_file_path);
-            written_bytes = validate_file.write_all(temp_file.as_bytes());
-
-            // 実行用ファイルで再度コマンド実行
-            let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().expect("Failed getting output data written to standard output.");
-            for value in process.stdout.unwrap().bytes() {
-                let inner_value = value.unwrap();
-                // NULLバイトは除外
-                if (inner_value == 0 ) {
-                    continue;
-                }
-                // 前回まで出力した分は破棄する
-                if (previous_newline_count <= current_newline_count) {
-                    unsafe {
-                        putchar(inner_value as c_int);
-                    }
-                }
-                if (inner_value == 10) {
-                    current_newline_count = current_newline_count + 1;
-                }
-            }
-            previous_newline_count = current_newline_count;
-            current_newline_count = 0;
-        } else {
-            println!("Error: Failed to be executed the command which you input on background!");
-            println!("Error: {}", String::from_utf8(output.stderr).unwrap());
-        }
+        // } else {
+        //     println!("Error: Failed to be executed the command which you input on background!");
+        //     println!("Error: {}", String::from_utf8(output.stderr).unwrap());
+        // }
     }
     // 終了コマンド実行後----
     println!("See you again!");
