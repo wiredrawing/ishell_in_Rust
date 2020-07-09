@@ -274,7 +274,7 @@ fn main() {
                 previous_newline_count = current_newline_count;
                 current_newline_count = 0;
             } else {
-                panic!("Invalid Exit code.");
+                println!("Error: Failed to be executed the command which you input on background!");
             }
         } else {
             panic!("Your machine is unsupported.");
