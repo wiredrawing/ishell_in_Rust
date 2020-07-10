@@ -79,7 +79,7 @@ fn get_file_resource (path: &String) -> Vec<u8> {
 
 /// C言語のc_intサイズで文字出力をするため
 extern "C" {
-    fn putchar(s: c_int);
+    fn putchar(s: c_char);
 }
 
 fn main() {
@@ -189,6 +189,9 @@ fn main() {
             execute_file = create_new_file(&execute_file_path);
             execute_file.write_all("<?php \r\n".as_bytes()).unwrap();
             input.clear();
+            // 前回までの出力行数をリセットする
+            previous_newline_count = 0;
+            current_newline_count = 0;
             continue;
         } else {
             // 有効なコマンドとして評価する場合
@@ -255,6 +258,7 @@ fn main() {
 
                 // 実行用ファイルで再度コマンド実行
                 let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().expect("Failed getting output data written to standard output.");
+                let mut to_output_vec: Vec<u8> = Vec::new();
                 for value in process.stdout.unwrap().bytes() {
                     let inner_value = value.unwrap();
                     // NULLバイトは除外
@@ -263,14 +267,23 @@ fn main() {
                     }
                     // 前回まで出力した分は破棄する
                     if (previous_newline_count <= current_newline_count) {
+                        // to_output_vec.push(inner_value.clone());
                         unsafe {
-                            putchar(inner_value as c_int);
+                            putchar(inner_value as c_char);
                         }
                     }
                     if (inner_value == 10) {
                         current_newline_count = current_newline_count + 1;
                     }
                 }
+
+                // dump(&to_output_vec);
+                // echo (&"print_c_stringを使って実行=====>".to_string());
+                // print_c_string(to_output_vec.clone());
+                // echo (&"_printf_c_stringを使って実行=====>".to_string());
+                // _printf_c_string(to_output_vec.clone());
+                // echo (&"printf_c_stringを使って実行=====>".to_string());
+                // printf_c_string(to_output_vec.clone());
                 previous_newline_count = current_newline_count;
                 current_newline_count = 0;
             } else {
