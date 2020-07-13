@@ -18,6 +18,12 @@ pub fn echo (target : &String ) -> ()
 }
 
 
+pub fn print(target: &str) -> () {
+    println!("{}", target);
+    return ();
+}
+
+
 /// 簡易にデバッグを実行する(trait境界も記述)
 /// 戻りはUnit型を返却
 pub fn dump<T>(target: T)  -> () where T : std::fmt::Debug {

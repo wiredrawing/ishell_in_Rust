@@ -84,6 +84,30 @@ extern "C" {
 
 fn main() {
 
+
+    // // 親スコープでvectorを定義
+    // let mut out_vec = "親スコープの変数".as_bytes().to_vec();
+    // let mut closure = || -> () {
+    //     print("start closure.");
+    //     out_vec.push(10);
+    //     // dump(out_vec);
+    //     print("complete closure.");
+    //     return ();
+    // };
+
+    // closure();
+    // dump(out_vec);
+
+    // let mut i = 0;
+    // let mut increment =  move || -> usize {
+    //     i = i + 1;
+    //     return i;
+    // };
+    // println!("1 => {}", increment());
+    // println!("2 => {}", increment());
+    // println!("3 => {}", increment());
+    // println!("original => {}", i);
+
     let default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
     let arguments: Vec<String> = env::args().collect();
@@ -222,78 +246,85 @@ fn main() {
         // 以下よりphpコマンドの実行
         // let mut output_result : Result<Output, Error>;
         // let mut output : Output;
+        let ecode_result: Result<ExitStatus, Error>;
         let ecode: ExitStatus;
-        if cfg!(windows) {
-            let mut child_process  = Command::new(&command)
-                .args(&[&validate_file_path])
-                .stdout(Stdio::null())
-                .spawn()
-                .expect("Failed getting output data written to standard output.");
-            ecode = child_process.wait().expect("Failed getting output data written to standard output.");
 
-            // sub processを殺す
-            // let dead_child_process = child_process.kill();
-            // if dead_child_process.is_ok( ) != true
-            // {
-            //     echo (&"Could not fail to exit sub process.".to_string());
-            // }
-
-            if ecode.success() == true {
-                // 検証用ファイルでプログラムが正常終了した場合
-                let mut temp_file : String = fs::read_to_string(&validate_file_path).unwrap();
-
-                // プログラムが正常終了している場合のみ改行出力を追加
-                temp_file.push_str("\nprint(\"\n\"); \n");
-                remove_target_file(&execute_file_path);
-                execute_file = create_new_file(&execute_file_path);
-                written_bytes = execute_file.write_all(temp_file.as_bytes());
-                if (written_bytes.is_ok() != true) {
-                    panic!("Error: {}", written_bytes.unwrap_err().to_string());
-                }
-
-                // 検証用ファイルを再度削除し、改行出力を追加した分を再度保存
-                remove_target_file(&validate_file_path);
-                validate_file = create_new_file(&validate_file_path);
-                written_bytes = validate_file.write_all(temp_file.as_bytes());
-
-                // 実行用ファイルで再度コマンド実行
-                let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().expect("Failed getting output data written to standard output.");
-                let mut to_output_vec: Vec<u8> = Vec::new();
-                for value in process.stdout.unwrap().bytes() {
-                    let inner_value = value.unwrap();
-                    // NULLバイトは除外
-                    if (inner_value == 0 ) {
-                        continue;
-                    }
-                    // 前回まで出力した分は破棄する
-                    if (previous_newline_count <= current_newline_count) {
-                        // to_output_vec.push(inner_value.clone());
-                        unsafe {
-                            // putchar(inner_value as c_char);
-                            printf_c_char(inner_value as c_char);
-                            // println!("inner_value => {}", inner_value);
-                        }
-                    }
-                    if (inner_value == 10) {
-                        current_newline_count = current_newline_count + 1;
-                    }
-                }
-
-                // dump(&to_output_vec);
-                // echo (&"print_c_stringを使って実行=====>".to_string());
-                // print_c_string(to_output_vec.clone());
-                // echo (&"_printf_c_stringを使って実行=====>".to_string());
-                // _printf_c_string(to_output_vec.clone());
-                // echo (&"printf_c_stringを使って実行=====>".to_string());
-                // printf_c_string(to_output_vec.clone());
-                previous_newline_count = current_newline_count;
-                current_newline_count = 0;
-            } else {
-                println!("Error: Failed to be executed the command which you input on background!");
-            }
-        } else {
+        // 対象OSをwindowsとする
+        if cfg!(windows) != true {
             panic!("Your machine is unsupported.");
         }
+        let mut child_process  = Command::new(&command)
+            .args(&[&validate_file_path])
+            .stdout(Stdio::null())
+            .spawn()
+            .expect("Failed getting output data written to standard output.");
+        ecode_result = child_process.wait();
+        if ecode_result.is_ok() != true {
+            panic!("Failed getting output data written to standard output. => {}", ecode_result.unwrap_err());
+        }
+        ecode = ecode_result.unwrap();
+
+        // sub processを殺す
+        // let dead_child_process = child_process.kill();
+        // if dead_child_process.is_ok( ) != true
+        // {
+        //     echo (&"Could not fail to exit sub process.".to_string());
+        // }
+
+        // サブプロセスの実行結果
+        if ecode.success() != true {
+            println!("Error: Failed to be executed the command which you input on background!");
+            continue;
+        }
+        // 検証用ファイルでプログラムが正常終了した場合
+        let mut temp_file : String = fs::read_to_string(&validate_file_path).unwrap();
+
+        // プログラムが正常終了している場合のみ改行出力を追加
+        temp_file.push_str("\nprint(\"\n\"); \n");
+        remove_target_file(&execute_file_path);
+        execute_file = create_new_file(&execute_file_path);
+        written_bytes = execute_file.write_all(temp_file.as_bytes());
+        if (written_bytes.is_ok() != true) {
+            panic!("Error: {}", written_bytes.unwrap_err().to_string());
+        }
+
+        // 検証用ファイルを再度削除し、改行出力を追加した分を再度保存
+        remove_target_file(&validate_file_path);
+        validate_file = create_new_file(&validate_file_path);
+        written_bytes = validate_file.write_all(temp_file.as_bytes());
+
+        // 実行用ファイルで再度コマンド実行
+        let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().expect("Failed getting output data written to standard output.");
+        let mut to_output_vec: Vec<u8> = Vec::new();
+        for value in process.stdout.unwrap().bytes() {
+            let inner_value = value.unwrap();
+            // NULLバイトは除外
+            if (inner_value == 0 ) {
+                continue;
+            }
+            // 前回まで出力した分は破棄する
+            if (previous_newline_count <= current_newline_count) {
+                // to_output_vec.push(inner_value.clone());
+                unsafe {
+                    // putchar(inner_value as c_char);
+                    printf_c_char(inner_value as c_char);
+                    // println!("inner_value => {}", inner_value);
+                }
+            }
+            if (inner_value == 10) {
+                current_newline_count = current_newline_count + 1;
+            }
+        }
+
+        // dump(&to_output_vec);
+        // echo (&"print_c_stringを使って実行=====>".to_string());
+        // print_c_string(to_output_vec.clone());
+        // echo (&"_printf_c_stringを使って実行=====>".to_string());
+        // _printf_c_string(to_output_vec.clone());
+        // echo (&"printf_c_stringを使って実行=====>".to_string());
+        // printf_c_string(to_output_vec.clone());
+        previous_newline_count = current_newline_count;
+        current_newline_count = 0;
         // output = output_result.unwrap();
         // let exit_code : Option<i32> = output.status.code();
         // // let mut for_output : Vec<u8> = Vec::new();
