@@ -82,6 +82,39 @@ pub fn printf_c_string(output: Vec<u8>) -> isize {
     return -1;
 }
 
+pub fn printf_c_char(output: c_char) -> () {
+    unsafe {
+        #[link(name="legacy_stdio_definitions", kind="static")]
+        extern "C" {
+            fn printf(format: *const c_char, args: c_char) -> c_int;
+        }
+
+        // %指定子を作成する
+        let c_percent = CString::new("%c".to_string());
+        let c_percent_cstring: std::ffi::CString;
+        if c_percent.is_ok() == true {
+            c_percent_cstring = c_percent.unwrap();
+        } else {
+            panic!(c_percent.unwrap_err());
+        }
+        let c_percent_ptr = c_percent_cstring.as_ptr() as *const c_char;
+
+
+        // printf関数の第二引数を作成する
+        // let c_string_result = CString::new(output);
+        // let c_string: std::ffi::CString;
+        // if c_string_result.is_ok() == true {
+        //     c_string = c_string_result.unwrap();
+        // } else {
+        //     panic!(c_string_result.unwrap_err());
+        // }
+        // let c_string_ptr = c_string.as_ptr() as *mut c_char;
+        // echo (&"printfの前". to_string());
+        printf(c_percent_ptr, output as c_char);
+        // echo (&"printfの後". to_string());
+    }
+    return ();
+}
 
 /// printf関数の実装作業
 pub fn _printf_c_string(output: Vec<u8>) -> isize {

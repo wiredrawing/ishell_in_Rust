@@ -269,7 +269,9 @@ fn main() {
                     if (previous_newline_count <= current_newline_count) {
                         // to_output_vec.push(inner_value.clone());
                         unsafe {
-                            putchar(inner_value as c_char);
+                            // putchar(inner_value as c_char);
+                            printf_c_char(inner_value as c_char);
+                            // println!("inner_value => {}", inner_value);
                         }
                     }
                     if (inner_value == 10) {
