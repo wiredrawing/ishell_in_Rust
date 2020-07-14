@@ -295,7 +295,7 @@ fn main() {
 
         // 実行用ファイルで再度コマンド実行
         let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().expect("Failed getting output data written to standard output.");
-        let mut to_output_vec: Vec<u8> = Vec::new();
+        // let mut to_output_vec: Vec<u8> = Vec::new();
         for value in process.stdout.unwrap().bytes() {
             let inner_value = value.unwrap();
             // NULLバイトは除外
@@ -305,11 +305,11 @@ fn main() {
             // 前回まで出力した分は破棄する
             if (previous_newline_count <= current_newline_count) {
                 // to_output_vec.push(inner_value.clone());
-                unsafe {
+                // unsafe {
                     // putchar(inner_value as c_char);
                     printf_c_char(inner_value as c_char);
                     // println!("inner_value => {}", inner_value);
-                }
+                // }
             }
             if (inner_value == 10) {
                 current_newline_count = current_newline_count + 1;
