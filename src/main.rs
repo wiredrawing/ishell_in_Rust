@@ -84,7 +84,12 @@ extern "C" {
 
 fn main() {
 
-
+    let vec : Vec<u8> = Vec::new();
+    let mut vec_box : Box<String> = Box::new("もじれつ1".to_string());
+    // echo (&*vec_box);
+    println!("{}" , vec_box);
+    *vec_box = String::from("文字列を代入し直す");
+    println!("{}" , vec_box);
     // // 親スコープでvectorを定義
     // let mut out_vec = "親スコープの変数".as_bytes().to_vec();
     // let mut closure = || -> () {
@@ -177,7 +182,6 @@ fn main() {
         println!(">>> ");
         let mut input : String = get_command_line();
         remove_newline(&mut input);
-
 
         // 入力内容によってループ内の処理を変更する
         // コマンドラインを終了するための処理
@@ -305,9 +309,13 @@ fn main() {
             // 前回まで出力した分は破棄する
             if (previous_newline_count <= current_newline_count) {
                 // to_output_vec.push(inner_value.clone());
-                // unsafe {
+                print!("{}", inner_value as char);
+                unsafe {
+                    // println!("{}", inner_value);
+                    // printf_c_char(inner_value as c_char);
                     // putchar(inner_value as c_char);
-                    printf_c_char(inner_value as c_char);
+                    // putchar(inner_value as c_char);
+                }
                     // println!("inner_value => {}", inner_value);
                 // }
             }
