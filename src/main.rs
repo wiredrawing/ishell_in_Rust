@@ -82,37 +82,29 @@ extern "C" {
     fn putchar(s: c_char);
 }
 
+
 fn main() {
 
-    let vec : Vec<u8> = Vec::new();
-    let mut vec_box : Box<String> = Box::new("もじれつ1".to_string());
-    // echo (&*vec_box);
-    println!("{}" , vec_box);
-    *vec_box = String::from("文字列を代入し直す");
-    println!("{}" , vec_box);
-    // // 親スコープでvectorを定義
-    // let mut out_vec = "親スコープの変数".as_bytes().to_vec();
-    // let mut closure = || -> () {
-    //     print("start closure.");
-    //     out_vec.push(10);
-    //     // dump(out_vec);
-    //     print("complete closure.");
-    //     return ();
-    // };
 
-    // closure();
-    // dump(out_vec);
+    let mut string_reference: String = "文字列参照".to_string();
+    let literal_reference: &str = "文字列参照";
 
-    // let mut i = 0;
-    // let mut increment =  move || -> usize {
-    //     i = i + 1;
-    //     return i;
-    // };
-    // println!("1 => {}", increment());
-    // println!("2 => {}", increment());
-    // println!("3 => {}", increment());
-    // println!("original => {}", i);
+    let some : Option<i32> = Some(332);
+    println!("Option<i32 > {}", some.unwrap());
+    let aa : &str = &String::from("文字列参照");
+    println!("{}", aa.len());
+    let bb: &'static str = "文字列スライス";
+    println!("{}", bb.len());
 
+    let cc  = "文字列スライス".as_bytes();
+
+    for value in aa.bytes() {
+        println!("value => {:?}", value);
+    }
+    println!("{}", string_reference == literal_reference);
+    println!("*literal_reference => {:p}", literal_reference);
+    string_reference.push_str(&String::from("文字列push_strに&String型を渡す"));
+    println!("{}", string_reference);
     let default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
     let arguments: Vec<String> = env::args().collect();
@@ -309,12 +301,13 @@ fn main() {
             // 前回まで出力した分は破棄する
             if (previous_newline_count <= current_newline_count) {
                 // to_output_vec.push(inner_value.clone());
-                print!("{}", inner_value as char);
+                // print!("{}", inner_value);
                 unsafe {
                     // println!("{}", inner_value);
                     // printf_c_char(inner_value as c_char);
                     // putchar(inner_value as c_char);
-                    // putchar(inner_value as c_char);
+                    putchar(inner_value as c_char);
+                    // println!("{:x}", inner_value as c_char);
                 }
                     // println!("inner_value => {}", inner_value);
                 // }
@@ -324,7 +317,7 @@ fn main() {
             }
         }
 
-        // dump(&to_output_vec);
+        // println!("{}", String::from_utf8(to_output_vec).unwrap());
         // echo (&"print_c_stringを使って実行=====>".to_string());
         // print_c_string(to_output_vec.clone());
         // echo (&"_printf_c_stringを使って実行=====>".to_string());
