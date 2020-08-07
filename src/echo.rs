@@ -8,13 +8,17 @@ use std::io::prelude::*;
 use printf::printf;
 
 
-/// 引数に渡したString参照を出力する
-/// 戻りはUnit型を返却
-pub fn echo (target : &String ) -> ()
+/// 引数に渡したString型オブジェクトを出力する
+/// 戻りは文字列の長さを返却
+pub fn echo (target : String ) -> usize
 {
     let target_length : usize = target.len();
-    println!("{}", target);
-    return ();
+    if (target_length > 0) {
+        println!("{}", target);
+        return target_length;
+    } else {
+        return 0;
+    }
 }
 
 

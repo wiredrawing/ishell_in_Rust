@@ -45,15 +45,21 @@ use std::io::prelude::*;
 // echoモジュールを使用
 mod echo;
 // echoモジュール内のecho関数を単独で利用する
-use echo::*;
+use echo :: *;
 
 
 
-
+mod type_checker {
+    /// オブジェクトの型チェック
+    pub fn check_type<T>(_: T) -> String {
+        // println!("{}", std::any::type_name::<T>());
+        return std::any::type_name::<T>().to_string();
+    }
+}
 
 /// UTF-8以外の文字列を読み出したい場合
 /// ファイルからbytesを読み込んでいく。
-fn get_file_resource (path: &String) -> Vec<u8> {
+fn get_file_resource <'a> (path: &'a String) -> Vec<u8> {
 
     // 読み出し用vec
     let mut read_bytes : Vec<u8> = Vec::new();
@@ -83,28 +89,24 @@ extern "C" {
 }
 
 
+mod my_module {
+    fn first_word(s: &String) -> usize {
+        let bytes = s.as_bytes();
+
+        for (i, &item) in bytes.iter().enumerate() {
+            if item == b' ' {
+                return i;
+            }
+        }
+
+        s.len()
+    }
+}
+
+
 fn main() {
 
 
-    let mut string_reference: String = "文字列参照".to_string();
-    let literal_reference: &str = "文字列参照";
-
-    let some : Option<i32> = Some(332);
-    println!("Option<i32 > {}", some.unwrap());
-    let aa : &str = &String::from("文字列参照");
-    println!("{}", aa.len());
-    let bb: &'static str = "文字列スライス";
-    println!("{}", bb.len());
-
-    let cc  = "文字列スライス".as_bytes();
-
-    for value in aa.bytes() {
-        println!("value => {:?}", value);
-    }
-    println!("{}", string_reference == literal_reference);
-    println!("*literal_reference => {:p}", literal_reference);
-    string_reference.push_str(&String::from("文字列push_strに&String型を渡す"));
-    println!("{}", string_reference);
     let default_command : String = "php".to_string();
     // 実行時のコマンドライン引数を取得
     let arguments: Vec<String> = env::args().collect();
@@ -291,7 +293,10 @@ fn main() {
 
         // 実行用ファイルで再度コマンド実行
         let process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::piped()).spawn().expect("Failed getting output data written to standard output.");
+        // let _process = Command::new(&command).args(&[&execute_file_path]).stdout(Stdio::inherit()).output().expect("Failed getting output data written to standard output.");
+        // continue;
         // let mut to_output_vec: Vec<u8> = Vec::new();
+        println!("");
         for value in process.stdout.unwrap().bytes() {
             let inner_value = value.unwrap();
             // NULLバイトは除外
@@ -304,9 +309,9 @@ fn main() {
                 // print!("{}", inner_value);
                 unsafe {
                     // println!("{}", inner_value);
-                    // printf_c_char(inner_value as c_char);
+                    printf_c_char(inner_value as c_char);
                     // putchar(inner_value as c_char);
-                    putchar(inner_value as c_char);
+                    // putchar(inner_value as c_char);
                     // println!("{:x}", inner_value as c_char);
                 }
                     // println!("inner_value => {}", inner_value);
@@ -317,26 +322,9 @@ fn main() {
             }
         }
 
-        // println!("{}", String::from_utf8(to_output_vec).unwrap());
-        // echo (&"print_c_stringを使って実行=====>".to_string());
-        // print_c_string(to_output_vec.clone());
-        // echo (&"_printf_c_stringを使って実行=====>".to_string());
-        // _printf_c_string(to_output_vec.clone());
-        // echo (&"printf_c_stringを使って実行=====>".to_string());
-        // printf_c_string(to_output_vec.clone());
+
         previous_newline_count = current_newline_count;
         current_newline_count = 0;
-        // output = output_result.unwrap();
-        // let exit_code : Option<i32> = output.status.code();
-        // // let mut for_output : Vec<u8> = Vec::new();
-        // // コマンドの実行結果が 「0」かどうかを検証
-        // if (exit_code.is_some() == true && exit_code.unwrap() == 0) {
-
-
-        // } else {
-        //     println!("Error: Failed to be executed the command which you input on background!");
-        //     println!("Error: {}", String::from_utf8(output.stderr).unwrap());
-        // }
     }
     // 終了コマンド実行後----
     println!("See you again!");
@@ -349,7 +337,8 @@ fn main() {
 /// ファイルの作成に失敗した場合は、パニックをおこす
 fn create_new_file (path : &String ) -> std::fs::File
 {
-    let new_file : Result <std::fs::File, Error> = fs::File::create(path);
+    let local_path : String = (*path).clone();
+    let new_file : Result <std::fs::File, Error> = fs::File::create(local_path);
 
     if (new_file.is_ok() != true) {
         // パニックでプロセスを落とす
@@ -379,7 +368,7 @@ fn remove_target_file (path : &String) -> bool
 fn str_position (target : &String, needle : u8) -> i32
 {
     let temp = target.as_bytes().iter().enumerate();
-    check_type(&temp);
+    type_checker::check_type(&temp);
     for (index, value) in target.as_bytes().iter().enumerate() {
         if (needle == *value) {
             return (index as i32);
@@ -406,10 +395,10 @@ fn remove_newline(newline_string : &mut String)
             if (_bytes[_bytes.len() - 1] == 13) {
                 _bytes.pop();
             }
-            check_type(&_bytes);
+            type_checker::check_type(&_bytes);
             new_vec = _bytes.to_vec();
-            check_type(&_bytes);
-            check_type(&new_vec);
+            type_checker::check_type(&_bytes);
+            type_checker::check_type(&new_vec);
         }
         let response : Result<String, FromUtf8Error> = String::from_utf8(new_vec);
         if (response.is_ok() == true) {
@@ -418,10 +407,4 @@ fn remove_newline(newline_string : &mut String)
             *newline_string = response.unwrap_err().to_string();
         }
     }
-}
-
-/// オブジェクトの型チェック
-fn check_type<T>(_: &T) -> String {
-    // println!("{}", std::any::type_name::<T>());
-    return std::any::type_name::<T>().to_string();
 }
